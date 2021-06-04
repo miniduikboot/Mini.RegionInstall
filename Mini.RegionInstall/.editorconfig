@@ -1,0 +1,16 @@
+# top-most EditorConfig file
+root = true
+
+# Don't use tabs for indentation.
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = tab
+
+[*.cs]
+csharp_using_directive_placement = inside_namespace
+dotnet_style_qualification_for_event = true
+dotnet_style_qualification_for_field = true
+dotnet_style_qualification_for_method = true
+dotnet_style_qualification_for_property = true
