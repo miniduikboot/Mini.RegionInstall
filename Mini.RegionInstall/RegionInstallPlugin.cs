@@ -18,10 +18,11 @@
 namespace Mini.RegionInstall
 {
 	using System;
+	using System.Text.Json;
+	using System.Text.Json.Serialization;
 	using BepInEx;
 	using BepInEx.Configuration;
 	using BepInEx.IL2CPP;
-	using Newtonsoft.Json;
 
 	/**
 	 * <summary>
@@ -78,30 +79,38 @@ namespace Mini.RegionInstall
 			this.Log.LogInfo($"Adding {regions.Length} regions");
 			foreach (IRegionInfo region in regions)
 			{
-				serverMngr.AddOrUpdateRegion(region);
+				if (region == null)
+				{
+					this.Log.LogError("Could not add region");
+				}
+				else
+				{
+					serverMngr.AddOrUpdateRegion(region);
+				}
 			}
 
 			// AU remembers the previous region that was set, so we need to restore it
-			serverMngr.SetRegion(currentRegion);
+			if (currentRegion != null)
+			{
+				this.Log.LogDebug("Resetting previous region");
+				serverMngr.SetRegion(currentRegion);
+			}
 		}
 
 		private IRegionInfo[] ParseRegions(string regions)
 		{
+			this.Log.LogInfo($"Parsing {regions}");
 			switch (regions[0])
 			{
 				// The entire JsonServerData
 				case '{':
 					this.Log.LogInfo("Loading server data");
 
-					// This is the only JsonConvert.DeserializeObject generic that is available in Among Us at the moment.
-					ServerManager.JsonServerData? result = JsonConvert.DeserializeObject<ServerManager.JsonServerData>(
-						regions,
-						new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto });
-					if (result == null)
-					{
-						this.Log.LogError("Could not parse configured regions");
-						return Array.Empty<IRegionInfo>();
-					}
+					// Set up S.T.Json with our custom converter
+					JsonSerializerOptions? options = new JsonSerializerOptions();
+					options.Converters.Add(new RegionInfoConverter());
+
+					ServerData result = JsonSerializer.Deserialize<ServerData>(regions, options);
 
 					return result.Regions;
 
@@ -115,6 +124,42 @@ namespace Mini.RegionInstall
 					this.Log.LogError("Could not detect format of configured regions");
 					return Array.Empty<IRegionInfo>();
 			}
+		}
+
+		/**
+		 * <summary>
+		 * Clone of the base game ServerData struct to add a constructor.
+		 * </summary>
+		 */
+		public struct ServerData
+		{
+			/**
+			 * <summary>
+			 * Initializes a new instance of the <see cref="ServerData"/> struct.
+			 * </summary>
+			 * <param name="currentRegionIdx">Unused, but present in JSON.</param>
+			 * <param name="regions">The regions to add.</param>
+			 */
+			[JsonConstructor]
+			public ServerData(int currentRegionIdx, IRegionInfo[] regions)
+			{
+				this.CurrentRegionIdx = currentRegionIdx;
+				this.Regions = regions;
+			}
+
+			/**
+			 * <summary>
+			 * Gets the Id of the currently selected region. Unused.
+			 * </summary>
+			 */
+			public int CurrentRegionIdx { get; }
+
+			/**
+			 * <summary>
+			 * Gets an array of regions to add.
+			 * </summary>
+			 */
+			public IRegionInfo[] Regions { get; }
 		}
 	}
 }
