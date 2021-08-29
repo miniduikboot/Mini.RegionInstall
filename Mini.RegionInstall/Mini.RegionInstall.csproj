@@ -26,6 +26,10 @@
 		<AdditionalFiles Include="stylecop.json"/>
 	</ItemGroup>
 
+	<ItemGroup Condition="$(DefineConstants.Contains('REACTOR'))">
+		<PackageReference Include="Reactor" Version="1.0.0-rc.1" />
+	</ItemGroup>
+
 	<Target Name="Copy" AfterTargets="Build" Condition="'$(AmongUs)' != ''">
 		<Copy SourceFiles="$(OutputPath)/$(AssemblyName).dll" DestinationFolder="$(AmongUs)/BepInEx/plugins/" />
 	</Target>

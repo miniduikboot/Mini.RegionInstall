@@ -23,6 +23,9 @@ namespace Mini.RegionInstall
 	using BepInEx;
 	using BepInEx.Configuration;
 	using BepInEx.IL2CPP;
+#if REACTOR
+	using Reactor;
+#endif
 
 	/**
 	 * <summary>
@@ -31,6 +34,9 @@ namespace Mini.RegionInstall
 	  */
 	[BepInPlugin(Id)]
 	[BepInProcess("Among Us.exe")]
+#if REACTOR
+	[ReactorPluginSide(PluginSide.ClientOnly)]
+#endif
 	public class RegionInstallPlugin : BasePlugin
 	{
 		private const string Id = "at.duikbo.regioninstall";
