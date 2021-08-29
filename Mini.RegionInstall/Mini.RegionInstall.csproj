@@ -1,38 +1,31 @@
 <Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup>
-        <TargetFramework>netstandard2.1</TargetFramework>
-        <Version>1.0.0</Version>
-        <Mappings>DaemonBeast/Mappings:0.5.0</Mappings>
+	<PropertyGroup>
+		<TargetFramework>netstandard2.1</TargetFramework>
+		<Version>1.0.0</Version>
 
-        <EnableNETAnalyzers>true</EnableNETAnalyzers>
-        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<EnableNETAnalyzers>true</EnableNETAnalyzers>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<Nullable>enable</Nullable>
 
-        <Description>Mod template for Reactor</Description>
-        <Authors>miniduikboot</Authors>
-    </PropertyGroup>
+		<Description>Installs regions into your regionInfo.json file</Description>
+		<Authors>miniduikboot</Authors>
+	</PropertyGroup>
 
-    <PropertyGroup Condition="'$(GamePlatform)' == 'Steam'">
-        <GameVersion>2021.5.10s</GameVersion>
-        <DefineConstants>$(DefineConstants);STEAM</DefineConstants>
-    </PropertyGroup>
+	<PropertyGroup>
+		<GameVersion>2021.6.30i</GameVersion>
+		<GameProvider>Github</GameProvider>
+	</PropertyGroup>
 
-    <PropertyGroup Condition="'$(GamePlatform)' == 'Itch'">
-        <GameVersion>2021.5.10i</GameVersion>
-        <DefineConstants>$(DefineConstants);ITCH</DefineConstants>
-    </PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Reactor.MSBuild" Version="0.1.4" PrivateAssets="all" />
 
-    <ItemGroup>
-        <Deobfuscate Include="$(AmongUs)\BepInEx\plugins\Reactor-$(GameVersion).dll" />
-        <PackageReference Include="Reactor.OxygenFilter.MSBuild" Version="0.3.0" />
-
-        <PackageReference Include="SonarAnalyzer.CSharp" Version="8.23.0.32424" PrivateAssets="All"/>
-        <PackageReference Include="Roslynator.Analyzers" Version="3.1.0" PrivateAssets="All"/>
-        <PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="All"/>
+		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.23.0.32424" PrivateAssets="All"/>
+		<PackageReference Include="Roslynator.Analyzers" Version="3.1.0" PrivateAssets="All"/>
+		<PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="All"/>
 		<AdditionalFiles Include="stylecop.json"/>
-    </ItemGroup>
+	</ItemGroup>
 
-    <Target Name="Copy" AfterTargets="Reobfuscate">
-        <Copy SourceFiles="$(OutputPath)reobfuscated/$(AssemblyName)-$(GameVersion).dll" DestinationFolder="$(AmongUs)/BepInEx/plugins/" Condition="'$(Configuration)' == 'Debug'" />
-    </Target>
+	<Target Name="Copy" AfterTargets="Build" Condition="'$(AmongUs)' != ''">
+		<Copy SourceFiles="$(OutputPath)/$(AssemblyName).dll" DestinationFolder="$(AmongUs)/BepInEx/plugins/" />
+	</Target>
 </Project>
