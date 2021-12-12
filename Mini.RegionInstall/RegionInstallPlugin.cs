@@ -32,15 +32,13 @@ namespace Mini.RegionInstall
 	 * Plugin that installs user specified servers into the region file.
 	 * </summary>
 	  */
-	[BepInPlugin(Id)]
+	[BepInAutoPlugin("at.duikbo.regioninstall")]
 	[BepInProcess("Among Us.exe")]
 #if REACTOR
 	[ReactorPluginSide(PluginSide.ClientOnly)]
 #endif
-	public class RegionInstallPlugin : BasePlugin
+	public partial class RegionInstallPlugin : BasePlugin
 	{
-		private const string Id = "at.duikbo.regioninstall";
-
 		/**
 		 * <summary>
 		 * Load the plugin and install the servers.

@@ -1,7 +1,7 @@
 # top-most EditorConfig file
 root = true
 
-# Don't use tabs for indentation.
+# Use tabs for indentation.
 [*]
 charset = utf-8
 end_of_line = lf
