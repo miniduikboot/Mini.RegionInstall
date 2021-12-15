@@ -41,12 +41,13 @@ namespace Mini.RegionInstall
 
 			Dictionary<string, string> stringValues = new Dictionary<string, string>();
 			Dictionary<string, ushort> intValues = new Dictionary<string, ushort>();
+			Dictionary<string, bool> boolValues = new Dictionary<string, bool>();
 
 			while (reader.Read())
 			{
 				if (reader.TokenType == JsonTokenType.EndObject)
 				{
-					return Assemble(stringValues, intValues);
+					return Assemble(stringValues, intValues, boolValues);
 				}
 				else if (reader.TokenType == JsonTokenType.PropertyName)
 				{
@@ -57,6 +58,11 @@ namespace Mini.RegionInstall
 					{
 						ushort val = reader.GetUInt16();
 						intValues.Add(propName, val);
+					}
+					else if (propName == "UseDtls")
+					{
+						bool val = reader.GetBoolean();
+						boolValues.Add(propName, val);
 					}
 					else if (propName != null)
 					{
@@ -82,7 +88,7 @@ namespace Mini.RegionInstall
 			throw new NotImplementedException();
 		}
 
-		private static IRegionInfo? Assemble(Dictionary<string, string> stringValues, Dictionary<string, ushort> intValues)
+		private static IRegionInfo? Assemble(Dictionary<string, string> stringValues, Dictionary<string, ushort> intValues, Dictionary<string, bool> boolValues)
 		{
 			if (!stringValues.TryGetValue("$type", out string type))
 			{
@@ -97,10 +103,11 @@ namespace Mini.RegionInstall
 					stringValues.TryGetValue("Name", out string? name);
 					intValues.TryGetValue("Port", out ushort port);
 					intValues.TryGetValue("TranslateName", out ushort translateName);
+					boolValues.TryGetValue("UseDtls", out bool useDtls); // Defaults to false
 
 					// HACK: Unhollower is unable to deal with inheritance properly, so you need special code to deal with it.
 					// Simplify when https://github.com/knah/Il2CppAssemblyUnhollower/issues/33 is resolved.
-					return new DnsRegionInfo(fqdn, name, (StringNames)translateName, defaultIp, port).Duplicate();
+					return new DnsRegionInfo(fqdn, name, (StringNames)translateName, defaultIp, port, useDtls).Duplicate();
 
 				case "StaticRegionInfo, Assembly-CSharp":
 					// TODO implement
@@ -112,7 +119,7 @@ namespace Mini.RegionInstall
 
 		private static IRegionInfo? AddLocalhost()
 		{
-			return new DnsRegionInfo("localhost", "Localhost", StringNames.NoTranslation, "127.0.0.1", 22023).Cast<IRegionInfo>();
+			return new DnsRegionInfo("localhost", "Localhost", StringNames.NoTranslation, "127.0.0.1", 22023, false).Cast<IRegionInfo>();
 		}
 	}
 }
