@@ -31,7 +31,7 @@ namespace Mini.RegionInstall
 	 * <summary>
 	 * Plugin that installs user specified servers into the region file.
 	 * </summary>
-	  */
+	 */
 	[BepInAutoPlugin("at.duikbo.regioninstall")]
 	[BepInProcess("Among Us.exe")]
 #if REACTOR
@@ -47,22 +47,11 @@ namespace Mini.RegionInstall
 		public override void Load()
 		{
 			this.Log.LogInfo("Starting Mini.RegionInstall");
-			ConfigEntry<bool>? addDefaultRegions = this.Config.Bind(
-				"General",
-				"AddDefaultRegions",
-				true,
-				"Set to true if you want to add the default Among Us regions to the menu");
 			ConfigEntry<string>? regions = this.Config.Bind(
 				"General",
 				"Regions",
 				"{\"CurrentRegionIdx\":0,\"Regions\":[]}",
 				"Create an array of regions you want to add/update. To create this array, go to https://impostor.github.io/Impostor/ and put the Regions array from the server file in here");
-
-			if (addDefaultRegions?.Value == true)
-			{
-				this.Log.LogInfo("Adding DefaultRegions");
-				this.AddRegions(ServerManager.DefaultRegions);
-			}
 
 			if (regions != null && regions.Value.Length != 0)
 			{
