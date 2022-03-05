@@ -18,6 +18,8 @@
 namespace Mini.RegionInstall
 {
 	using System;
+	using System.Collections.Generic;
+	using System.Linq;
 	using System.Text.Json;
 	using System.Text.Json.Serialization;
 	using BepInEx;
@@ -52,6 +54,20 @@ namespace Mini.RegionInstall
 				"Regions",
 				"{\"CurrentRegionIdx\":0,\"Regions\":[]}",
 				"Create an array of regions you want to add/update. To create this array, go to https://impostor.github.io/Impostor/ and put the Regions array from the server file in here");
+
+			ConfigEntry<string>? removeRegions = this.Config.Bind(
+				"General",
+				"RemoveRegions",
+				string.Empty,
+				"Comma-seperated list of region names that should be removed.");
+
+			// Remove regions first in case the user accidentally also adds a region with the same name.
+			if (removeRegions != null)
+			{
+				string[] rmRegions = removeRegions.Value.Split(",");
+				this.Log.LogInfo($"Removing User Regions: \"{string.Join("\", \"", rmRegions)}\"");
+				this.RemoveRegions(rmRegions);
+			}
 
 			if (regions != null && regions.Value.Length != 0)
 			{
@@ -117,6 +133,13 @@ namespace Mini.RegionInstall
 					this.Log.LogError("Could not detect format of configured regions");
 					return Array.Empty<IRegionInfo>();
 			}
+		}
+
+		private void RemoveRegions(string[] regionNames)
+		{
+			IEnumerable<IRegionInfo> newRegions = ServerManager.Instance.AvailableRegions.Where(
+				(IRegionInfo r) => Array.FindIndex(regionNames, (string name) => name.Equals(r.Name, StringComparison.OrdinalIgnoreCase)) == -1);
+			ServerManager.Instance.AvailableRegions = newRegions.ToArray();
 		}
 
 		/**
