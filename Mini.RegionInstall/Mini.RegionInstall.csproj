@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>netstandard2.1</TargetFramework>
-		<Version>1.1.0</Version>
+		<Version>1.1.1</Version>
 
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -14,7 +14,7 @@
 
 	<PropertyGroup>
 		<GamePlatform Condition="'$(GamePlatform)' == ''">Steam</GamePlatform>
-		<GameVersion Condition="'$(GameVersion)' == ''">2022.2.23</GameVersion>
+		<GameVersion Condition="'$(GameVersion)' == ''">2022.3.29</GameVersion>
 	</PropertyGroup>
 
 	<ItemGroup>

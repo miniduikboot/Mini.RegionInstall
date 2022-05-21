@@ -4,9 +4,9 @@
     ".NETStandard,Version=v2.1": {
       "AmongUs.GameLibs.Steam": {
         "type": "Direct",
-        "requested": "[2022.2.23, )",
-        "resolved": "2022.2.23",
-        "contentHash": "CHMKmYSv00f7bU8pZ/NSfXNSSwKqCtcYyLsBmiFJ8asx+wmLKXHPsUbB9l+Ew2ZdisTt8lU+bQm2jznyWaMtdw=="
+        "requested": "[2022.3.29, )",
+        "resolved": "2022.3.29",
+        "contentHash": "EStKwHGq8MMvSRxIHjlh31VJmCZrGHZ/xoDDN33L5gh7XJLWBFufo6+5ueezndSRpanoCkqLwuTkG73KCS2J1A=="
       },
       "BepInEx.AutoPlugin": {
         "type": "Direct",
@@ -37,6 +37,15 @@
         "requested": "[1.0.2, )",
         "resolved": "1.0.2",
         "contentHash": "RdnDWUFy0em+AtYXohvPx4HbGokvfzJaiVovFNj35PhwzMlgqHZRIxLHoTRnfJLeWJruqBi8PXJj03JqJAeQUw=="
+      },
+      "Reactor": {
+        "type": "Direct",
+        "requested": "[1.1.0, )",
+        "resolved": "1.1.0",
+        "contentHash": "iH8G9j+GO/TV21aJWDOhY5GzNsUK+hxfHXGavYL3HetRa0EbTADpPkkpUKsl7By6SbWYr4fBED+KlQ2/Ib4l9A==",
+        "dependencies": {
+          "BepInEx.IL2CPP": "6.0.0-be.521"
+        }
       },
       "Roslynator.Analyzers": {
         "type": "Direct",

@@ -25,6 +25,8 @@ namespace Mini.RegionInstall
 	using BepInEx;
 	using BepInEx.Configuration;
 	using BepInEx.IL2CPP;
+	using HarmonyLib;
+	using UnityEngine.SceneManagement;
 #if REACTOR
 	using Reactor;
 #endif
@@ -41,6 +43,9 @@ namespace Mini.RegionInstall
 #endif
 	public partial class RegionInstallPlugin : BasePlugin
 	{
+		public static BepInEx.Logging.ManualLogSource Logger;
+
+		public Harmony Harmony { get; } = new Harmony(Id);
 		/**
 		 * <summary>
 		 * Load the plugin and install the servers.
@@ -48,7 +53,9 @@ namespace Mini.RegionInstall
 		 */
 		public override void Load()
 		{
+			Logger = this.Log;
 			this.Log.LogInfo("Starting Mini.RegionInstall");
+			Harmony.PatchAll();
 			ConfigEntry<string>? regions = this.Config.Bind(
 				"General",
 				"Regions",
@@ -61,19 +68,26 @@ namespace Mini.RegionInstall
 				string.Empty,
 				"Comma-seperated list of region names that should be removed.");
 
-			// Remove regions first in case the user accidentally also adds a region with the same name.
-			if (removeRegions != null)
+			// Register our regions when at the main menu to run after AU loads the server file
+			SceneManager.add_sceneLoaded((Action<Scene, LoadSceneMode>)((scene, _) =>
 			{
-				string[] rmRegions = removeRegions.Value.Split(",");
-				this.Log.LogInfo($"Removing User Regions: \"{string.Join("\", \"", rmRegions)}\"");
-				this.RemoveRegions(rmRegions);
-			}
+				if (scene.name == "MainMenu")
+				{
+					// Remove regions first in case the user accidentally also adds a region with the same name.
+					if (removeRegions != null)
+					{
+						string[] rmRegions = removeRegions.Value.Split(",");
+						this.Log.LogInfo($"Removing User Regions: \"{string.Join("\", \"", rmRegions)}\"");
+						this.RemoveRegions(rmRegions);
+					}
 
-			if (regions != null && regions.Value.Length != 0)
-			{
-				this.Log.LogInfo("Adding User Regions");
-				this.AddRegions(this.ParseRegions(regions.Value));
-			}
+					if (regions != null && regions.Value.Length != 0)
+					{
+						this.Log.LogInfo("Adding User Regions");
+						this.AddRegions(this.ParseRegions(regions.Value));
+					}
+				}
+			}));
 		}
 
 		/**
@@ -94,6 +108,11 @@ namespace Mini.RegionInstall
 				}
 				else
 				{
+					if (region.Name.Equals(currentRegion.Name, StringComparison.OrdinalIgnoreCase))
+					{
+						currentRegion = region;
+					}
+
 					serverMngr.AddOrUpdateRegion(region);
 				}
 			}
@@ -120,6 +139,10 @@ namespace Mini.RegionInstall
 					options.Converters.Add(new RegionInfoConverter());
 
 					ServerData result = JsonSerializer.Deserialize<ServerData>(regions, options);
+
+					foreach (IRegionInfo region in result.Regions) {
+						this.Log.LogInfo($"Region \"{region.Name}\" @ {region.Servers[0].Ip}:{region.Servers[0].Port}");
+					}
 
 					return result.Regions;
 
@@ -176,6 +199,33 @@ namespace Mini.RegionInstall
 			 * </summary>
 			 */
 			public IRegionInfo[] Regions { get; }
+		}
+	}
+
+	[HarmonyPatch(typeof(DnsRegionInfo), nameof(DnsRegionInfo.PopulateServers))]
+	public static class DRIPatch
+	{
+		public static void Postfix(DnsRegionInfo __instance)
+		{
+			RegionInstallPlugin.Logger.LogInfo($"DRI Populate Servers: {__instance.Fqdn}");
+			foreach (var server in __instance.Servers)
+			{
+				RegionInstallPlugin.Logger.LogInfo($"Configured server: {server.ToString()}");
+			}
+		}
+	}
+
+	[HarmonyPatch(typeof(ServerManager), nameof(ServerManager.ReselectServer))]
+	public static class SMReselectPatch
+	{
+		public static void Postfix(ServerManager __instance)
+		{
+			var region =  __instance.CurrentRegion;
+			RegionInstallPlugin.Logger.LogInfo($"Current region: {region.Name} ({region.Servers.Length} servers)");
+			RegionInstallPlugin.Logger.LogInfo($"Region \"{region.Servers[0].Name}\" @ {region.Servers[0].Ip}:{region.Servers[0].Port}");
+
+			var server = __instance.CurrentUdpServer;
+			RegionInstallPlugin.Logger.LogInfo($"Current server: {server.ToString()}");
 		}
 	}
 }
