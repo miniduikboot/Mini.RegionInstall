@@ -19,6 +19,7 @@ namespace Mini.RegionInstall
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Collections.ObjectModel;
 	using System.Linq;
 	using System.Text.Json;
 	using System.Text.Json.Serialization;
@@ -44,6 +45,8 @@ namespace Mini.RegionInstall
 	public partial class RegionInstallPlugin : BasePlugin
 	{
 		public static BepInEx.Logging.ManualLogSource Logger;
+
+		private static ReadOnlyDictionary<string, IRegionInfo>? parsedRegions;
 
 		public Harmony Harmony { get; } = new Harmony(Id);
 		/**
@@ -84,7 +87,15 @@ namespace Mini.RegionInstall
 					if (regions != null && regions.Value.Length != 0)
 					{
 						this.Log.LogInfo("Adding User Regions");
-						this.AddRegions(this.ParseRegions(regions.Value));
+						IRegionInfo[] parsedRegions = this.ParseRegions(regions.Value);
+						this.AddRegions(parsedRegions);
+
+						Dictionary<string, IRegionInfo> regionsDict = new Dictionary<string, IRegionInfo>();
+						foreach (var region in parsedRegions)
+						{
+							regionsDict[region.Name] = region;
+						}
+						RegionInstallPlugin.parsedRegions = new ReadOnlyDictionary<string, IRegionInfo>(regionsDict);
 					}
 				}
 			}));
@@ -165,6 +176,24 @@ namespace Mini.RegionInstall
 			ServerManager.Instance.AvailableRegions = newRegions.ToArray();
 		}
 
+		public static void CorrectCurrentRegion(ServerManager instance)
+		{
+			var region = instance.CurrentRegion;
+			RegionInstallPlugin.Logger.LogInfo($"Current region: {region.Name} ({region.Servers.Length} servers)");
+			RegionInstallPlugin.Logger.LogInfo($"Region \"{region.Servers[0].Name}\" @ {region.Servers[0].Ip}:{region.Servers[0].Port}");
+
+			if (RegionInstallPlugin.parsedRegions != null && RegionInstallPlugin.parsedRegions.ContainsKey(region.Name))
+			{
+				instance.CurrentRegion = RegionInstallPlugin.parsedRegions[region.Name];
+
+				RegionInstallPlugin.Logger.LogInfo("Loading region from cache instead of from file");
+				if (region.Servers[0].Port != instance.CurrentRegion.Servers[0].Port)
+				{
+					RegionInstallPlugin.Logger.LogInfo($"Port corrected from {region.Servers[0].Port} to {instance.CurrentRegion.Servers[0].Port}");
+				}
+			}
+		}
+
 		/**
 		 * <summary>
 		 * Clone of the base game ServerData struct to add a constructor.
@@ -203,7 +232,7 @@ namespace Mini.RegionInstall
 	}
 
 	[HarmonyPatch(typeof(DnsRegionInfo), nameof(DnsRegionInfo.PopulateServers))]
-	public static class DRIPatch
+	public static class DnsRegionInfoPatch
 	{
 		public static void Postfix(DnsRegionInfo __instance)
 		{
@@ -218,14 +247,25 @@ namespace Mini.RegionInstall
 	[HarmonyPatch(typeof(ServerManager), nameof(ServerManager.ReselectServer))]
 	public static class SMReselectPatch
 	{
+		public static void Prefix(ServerManager __instance)
+		{
+			RegionInstallPlugin.CorrectCurrentRegion(__instance);
+		}
+
 		public static void Postfix(ServerManager __instance)
 		{
-			var region =  __instance.CurrentRegion;
-			RegionInstallPlugin.Logger.LogInfo($"Current region: {region.Name} ({region.Servers.Length} servers)");
-			RegionInstallPlugin.Logger.LogInfo($"Region \"{region.Servers[0].Name}\" @ {region.Servers[0].Ip}:{region.Servers[0].Port}");
-
 			var server = __instance.CurrentUdpServer;
 			RegionInstallPlugin.Logger.LogInfo($"Current server: {server.ToString()}");
+		}
+	}
+
+	[HarmonyPatch(typeof(ServerManager), nameof(ServerManager.LoadServers))]
+	public static class ServerManagerLoadServersPatch
+	{
+		public static void Postfix(ServerManager __instance)
+		{
+			RegionInstallPlugin.CorrectCurrentRegion(__instance);
+			__instance.CurrentUdpServer = __instance.CurrentRegion.Servers[0];
 		}
 	}
 }
