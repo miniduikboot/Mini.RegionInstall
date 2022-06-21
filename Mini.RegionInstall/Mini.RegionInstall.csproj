@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>netstandard2.1</TargetFramework>
-		<Version>1.1.1.1</Version>
+		<Version>1.1.2</Version>
 
 		<EnableNETAnalyzers>true</EnableNETAnalyzers>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -14,7 +14,7 @@
 
 	<PropertyGroup>
 		<GamePlatform Condition="'$(GamePlatform)' == ''">Steam</GamePlatform>
-		<GameVersion Condition="'$(GameVersion)' == ''">2022.3.29</GameVersion>
+		<GameVersion Condition="'$(GameVersion)' == ''">2022.6.21</GameVersion>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -28,10 +28,10 @@
 		<PackageReference Include="System.Text.Json" Version="5.0.2" />
 
 		<!-- Code style libraries -->
-		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.36.1.44192" PrivateAssets="All"/>
-		<PackageReference Include="Roslynator.Analyzers" Version="4.0.2" PrivateAssets="All"/>
-		<PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="All"/>
-		<AdditionalFiles Include="../stylecop.json"/>
+		<PackageReference Include="SonarAnalyzer.CSharp" Version="8.40.0.48530" PrivateAssets="all" />
+		<PackageReference Include="Roslynator.Analyzers" Version="4.1.1" PrivateAssets="all" />
+		<PackageReference Include="StyleCop.Analyzers" Version="1.1.118" PrivateAssets="All" />
+		<AdditionalFiles Include="../stylecop.json" />
 	</ItemGroup>
 
 	<ItemGroup Condition="$(DefineConstants.Contains('REACTOR'))">
