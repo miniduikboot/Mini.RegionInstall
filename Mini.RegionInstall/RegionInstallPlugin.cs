@@ -119,7 +119,7 @@ namespace Mini.RegionInstall
 				}
 				else
 				{
-					if (region.Name.Equals(currentRegion.Name, StringComparison.OrdinalIgnoreCase))
+					if (currentRegion != null && region.Name.Equals(currentRegion.Name, StringComparison.OrdinalIgnoreCase))
 					{
 						currentRegion = region;
 					}
