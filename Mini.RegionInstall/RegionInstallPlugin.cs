@@ -21,12 +21,11 @@ namespace Mini.RegionInstall
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
 	using System.Linq;
-	using System.Text.Json;
-	using System.Text.Json.Serialization;
 	using BepInEx;
 	using BepInEx.Configuration;
 	using BepInEx.IL2CPP;
 	using HarmonyLib;
+	using Newtonsoft.Json;
 	using UnityEngine.SceneManagement;
 #if REACTOR
 	using Reactor;
@@ -44,7 +43,7 @@ namespace Mini.RegionInstall
 #endif
 	public partial class RegionInstallPlugin : BasePlugin
 	{
-		public static BepInEx.Logging.ManualLogSource Logger;
+		internal static BepInEx.Logging.ManualLogSource? Logger;
 
 		private static ReadOnlyDictionary<string, IRegionInfo>? parsedRegions;
 
@@ -58,7 +57,7 @@ namespace Mini.RegionInstall
 		{
 			Logger = this.Log;
 			this.Log.LogInfo("Starting Mini.RegionInstall");
-			Harmony.PatchAll();
+			this.Harmony.PatchAll();
 			ConfigEntry<string>? regions = this.Config.Bind(
 				"General",
 				"Regions",
@@ -87,15 +86,15 @@ namespace Mini.RegionInstall
 					if (regions != null && regions.Value.Length != 0)
 					{
 						this.Log.LogInfo("Adding User Regions");
-						IRegionInfo[] parsedRegions = this.ParseRegions(regions.Value);
-						this.AddRegions(parsedRegions);
+						IRegionInfo[] parsed = this.ParseRegions(regions.Value);
+						this.AddRegions(parsed);
 
 						Dictionary<string, IRegionInfo> regionsDict = new Dictionary<string, IRegionInfo>();
-						foreach (var region in parsedRegions)
+						foreach (var region in parsed)
 						{
 							regionsDict[region.Name] = region;
 						}
-						RegionInstallPlugin.parsedRegions = new ReadOnlyDictionary<string, IRegionInfo>(regionsDict);
+						parsedRegions = new ReadOnlyDictionary<string, IRegionInfo>(regionsDict);
 					}
 				}
 			}));
@@ -145,13 +144,12 @@ namespace Mini.RegionInstall
 				case '{':
 					this.Log.LogInfo("Loading server data");
 
-					// Set up S.T.Json with our custom converter
-					JsonSerializerOptions? options = new JsonSerializerOptions();
-					options.Converters.Add(new RegionInfoConverter());
+					var result = JsonConvert.DeserializeObject<ServerManager.JsonServerData>(
+						regions,
+						new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto });
 
-					ServerData result = JsonSerializer.Deserialize<ServerData>(regions, options);
-
-					foreach (IRegionInfo region in result.Regions) {
+					foreach (IRegionInfo region in result.Regions)
+					{
 						this.Log.LogInfo($"Region \"{region.Name}\" @ {region.Servers[0].Ip}:{region.Servers[0].Port}");
 					}
 
@@ -169,65 +167,29 @@ namespace Mini.RegionInstall
 			}
 		}
 
-		private void RemoveRegions(string[] regionNames)
-		{
-			IEnumerable<IRegionInfo> newRegions = ServerManager.Instance.AvailableRegions.Where(
-				(IRegionInfo r) => Array.FindIndex(regionNames, (string name) => name.Equals(r.Name, StringComparison.OrdinalIgnoreCase)) == -1);
-			ServerManager.Instance.AvailableRegions = newRegions.ToArray();
-		}
-
 		public static void CorrectCurrentRegion(ServerManager instance)
 		{
 			var region = instance.CurrentRegion;
-			RegionInstallPlugin.Logger.LogInfo($"Current region: {region.Name} ({region.Servers.Length} servers)");
-			RegionInstallPlugin.Logger.LogInfo($"Region \"{region.Servers[0].Name}\" @ {region.Servers[0].Ip}:{region.Servers[0].Port}");
+			RegionInstallPlugin.Logger?.LogInfo($"Current region: {region.Name} ({region.Servers.Length} servers)");
+			RegionInstallPlugin.Logger?.LogInfo($"Region \"{region.Servers[0].Name}\" @ {region.Servers[0].Ip}:{region.Servers[0].Port}");
 
 			if (RegionInstallPlugin.parsedRegions != null && RegionInstallPlugin.parsedRegions.ContainsKey(region.Name))
 			{
 				instance.CurrentRegion = RegionInstallPlugin.parsedRegions[region.Name];
 
-				RegionInstallPlugin.Logger.LogInfo("Loading region from cache instead of from file");
+				RegionInstallPlugin.Logger?.LogInfo("Loading region from cache instead of from file");
 				if (region.Servers[0].Port != instance.CurrentRegion.Servers[0].Port)
 				{
-					RegionInstallPlugin.Logger.LogInfo($"Port corrected from {region.Servers[0].Port} to {instance.CurrentRegion.Servers[0].Port}");
+					RegionInstallPlugin.Logger?.LogInfo($"Port corrected from {region.Servers[0].Port} to {instance.CurrentRegion.Servers[0].Port}");
 				}
 			}
 		}
 
-		/**
-		 * <summary>
-		 * Clone of the base game ServerData struct to add a constructor.
-		 * </summary>
-		 */
-		public struct ServerData
+		private void RemoveRegions(string[] regionNames)
 		{
-			/**
-			 * <summary>
-			 * Initializes a new instance of the <see cref="ServerData"/> struct.
-			 * </summary>
-			 * <param name="currentRegionIdx">Unused, but present in JSON.</param>
-			 * <param name="regions">The regions to add.</param>
-			 */
-			[JsonConstructor]
-			public ServerData(int currentRegionIdx, IRegionInfo[] regions)
-			{
-				this.CurrentRegionIdx = currentRegionIdx;
-				this.Regions = regions;
-			}
-
-			/**
-			 * <summary>
-			 * Gets the Id of the currently selected region. Unused.
-			 * </summary>
-			 */
-			public int CurrentRegionIdx { get; }
-
-			/**
-			 * <summary>
-			 * Gets an array of regions to add.
-			 * </summary>
-			 */
-			public IRegionInfo[] Regions { get; }
+			IEnumerable<IRegionInfo> newRegions = ServerManager.Instance.AvailableRegions.Where(
+				(IRegionInfo r) => Array.FindIndex(regionNames, (string name) => name.Equals(r.Name, StringComparison.OrdinalIgnoreCase)) == -1);
+			ServerManager.Instance.AvailableRegions = newRegions.ToArray();
 		}
 	}
 
@@ -236,10 +198,10 @@ namespace Mini.RegionInstall
 	{
 		public static void Postfix(DnsRegionInfo __instance)
 		{
-			RegionInstallPlugin.Logger.LogInfo($"DRI Populate Servers: {__instance.Fqdn}");
+			RegionInstallPlugin.Logger?.LogInfo($"DRI Populate Servers: {__instance.Fqdn}");
 			foreach (var server in __instance.Servers)
 			{
-				RegionInstallPlugin.Logger.LogInfo($"Configured server: {server.ToString()}");
+				RegionInstallPlugin.Logger?.LogInfo($"Configured server: {server.ToString()}");
 			}
 		}
 	}
@@ -255,7 +217,7 @@ namespace Mini.RegionInstall
 		public static void Postfix(ServerManager __instance)
 		{
 			var server = __instance.CurrentUdpServer;
-			RegionInstallPlugin.Logger.LogInfo($"Current server: {server.ToString()}");
+			RegionInstallPlugin.Logger?.LogInfo($"Current server: {server.ToString()}");
 		}
 	}
 
