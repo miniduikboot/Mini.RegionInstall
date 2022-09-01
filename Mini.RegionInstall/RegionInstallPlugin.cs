@@ -23,7 +23,7 @@ namespace Mini.RegionInstall
 	using System.Linq;
 	using BepInEx;
 	using BepInEx.Configuration;
-	using BepInEx.IL2CPP;
+	using BepInEx.Unity.IL2CPP;
 	using HarmonyLib;
 	using Newtonsoft.Json;
 	using UnityEngine.SceneManagement;
