@@ -23,8 +23,3 @@ jobs:
         with:
           name: Mini.RegionInstall.dll
           path: output/Mini.RegionInstall.dll
-
-      - uses: actions/upload-artifact@v2
-        with:
-          name: Mini.RegionInstall-NoReactor.dll
-          path: output/Mini.RegionInstall-NoReactor.dll

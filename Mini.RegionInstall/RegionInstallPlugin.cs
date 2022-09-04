@@ -27,9 +27,6 @@ namespace Mini.RegionInstall
 	using HarmonyLib;
 	using Newtonsoft.Json;
 	using UnityEngine.SceneManagement;
-#if REACTOR
-	using Reactor;
-#endif
 
 	/**
 	 * <summary>
@@ -38,9 +35,6 @@ namespace Mini.RegionInstall
 	 */
 	[BepInAutoPlugin("at.duikbo.regioninstall")]
 	[BepInProcess("Among Us.exe")]
-#if REACTOR
-	[ReactorPluginSide(PluginSide.ClientOnly)]
-#endif
 	public partial class RegionInstallPlugin : BasePlugin
 	{
 		internal static BepInEx.Logging.ManualLogSource? Logger;

@@ -4,3 +4,5 @@ bin-reactor
 obj
 # direnv
 .envrc
+# my build script
+output
