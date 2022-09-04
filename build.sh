@@ -5,7 +5,7 @@ mkdir -p output
 
 # The normal build
 dotnet build -c Release \
-	-p:OutputPath=../output/bin-noreactor/
+	-p:OutputPath=../output/bin/
 # Artifact can be found in Mini.RegionInstall/bin/Release/Mini.RegionInstall.dll
 
 # build source code zip
