@@ -67,7 +67,8 @@ namespace Mini.RegionInstall
 			// Register our regions when at the main menu to run after AU loads the server file
 			SceneManager.add_sceneLoaded((Action<Scene, LoadSceneMode>)((scene, _) =>
 			{
-				if (scene.name == "MainMenu")
+				// renamed from MainMenu because some AU update broke something
+				if (scene.name == "SplashIntro")
 				{
 					// Remove regions first in case the user accidentally also adds a region with the same name.
 					if (removeRegions != null)
